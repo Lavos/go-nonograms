@@ -5,25 +5,29 @@ import (
 	"runtime"
 	"time"
 	sf "bitbucket.org/krepa098/gosfml2"
+
+	"github.com/Lavos/nonograms/staters"
 )
 
 type Game struct {
 	Window *sf.RenderWindow
-	Grid *Grid
 
-	Subscribers map[sf.EventType][]*Subscription
+	CurrentState staters.Stater
+	States []staters.Stater
 }
 
 func New() *Game {
 	runtime.LockOSThread()
 	renderWindow := sf.NewRenderWindow(sf.VideoMode{800, 600, 32}, "Events (GoSFML2)", sf.StyleDefault, sf.DefaultContextSettings())
 
+	s := make([]staters.Stater, 1)
+	s[0] = staters.NewFirst()
+
 	game := &Game{
 		Window: renderWindow,
-		Subscribers: make(map[sf.EventType][]*Subscription),
+		States: s,
+		CurrentState: s[0],
 	}
-
-	game.Grid = NewGrid(game)
 
 	return game
 }
@@ -45,50 +49,18 @@ func (g *Game) Run () {
 			fps++
 
 			for event := g.Window.PollEvent(); event != nil; event = g.Window.PollEvent() {
-				g.distribute(event)
+				switch event.Type() {
+				case sf.EventTypeClosed:
+					g.Window.Close()
+
+				default:
+					g.CurrentState.HandleEvent(event)
+				}
 			}
 
 			g.Window.Clear(sf.Color{50, 200, 50, 0})
-			g.Window.Draw(g.Grid.Shape, sf.DefaultRenderStates())
+			g.Window.Draw(g.CurrentState, sf.DefaultRenderStates())
 			g.Window.Display()
 		}
-	}
-}
-
-func (g *Game) Subscribe(sub *Subscription) {
-	current_subscribers := g.Subscribers[sub.EventType]
-	current_subscribers = append(current_subscribers, sub)
-	g.Subscribers[sub.EventType] = current_subscribers
-}
-
-func (g *Game) Unsubscribe(sub *Subscription) {
-	current_subscribers, ok := g.Subscribers[sub.EventType]
-
-	if !ok {
-		return
-	}
-
-	var index int
-	for i, c := range current_subscribers {
-		if c == sub {
-			index = i
-			break
-		}
-	}
-
-	current_subscribers = append(current_subscribers[:index], current_subscribers[index+1:]...)
-	g.Subscribers[sub.EventType] = current_subscribers
-}
-
-func (g *Game) distribute (event sf.Event) {
-	event_type := event.Type()
-	subscribers, ok := g.Subscribers[event_type]
-
-	if !ok {
-		return
-	}
-
-	for _, sub := range subscribers {
-		sub.Callback(event)
 	}
 }
