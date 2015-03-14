@@ -42,7 +42,7 @@ func (g *Game) Run () {
 	for g.Window.IsOpen(){
 		select {
 		case <-t.C:
-			log.Printf("FPS: %d", fps)
+			// log.Printf("FPS: %d", fps)
 			fps = 0
 
 		default:
@@ -57,6 +57,8 @@ func (g *Game) Run () {
 					g.CurrentState.HandleEvent(event)
 				}
 			}
+
+			g.CurrentState.Logic()
 
 			g.Window.Clear(sf.Color{50, 200, 50, 0})
 			g.Window.Draw(g.CurrentState, sf.DefaultRenderStates())

@@ -4,16 +4,22 @@ import (
 	sf "bitbucket.org/krepa098/gosfml2"
 )
 
+const (
+	StateEmpty = iota
+	StateFilled
+	StateCrossedOut
+)
+
+
 type Tile struct {
 	Shape *sf.RectangleShape
 
-	Clicked bool
+	State byte
 }
 
 func NewTile() *Tile {
 	shape, _ := sf.NewRectangleShape()
 
-	shape.SetFillColor(sf.ColorBlue())
 	shape.SetSize(sf.Vector2f{20, 20})
 
 	return &Tile{
@@ -22,18 +28,30 @@ func NewTile() *Tile {
 }
 
 func (t *Tile) SetHighlight(enabled bool) {
-	if t.Clicked {
-		return
-	}
 
-	if enabled {
-		t.Shape.SetFillColor(sf.ColorRed())
-	} else {
+}
+
+func (t *Tile) SetState(state byte) {
+	t.State = state
+
+	switch state {
+	case StateEmpty:
+		t.Shape.SetFillColor(sf.ColorWhite())
+
+	case StateFilled:
 		t.Shape.SetFillColor(sf.ColorBlack())
+
+	case StateCrossedOut:
+		t.Shape.SetFillColor(sf.ColorRed())
 	}
 }
 
 func (t *Tile) Activate() {
-	t.Clicked = true
-	t.Shape.SetFillColor(sf.ColorYellow())
+	switch t.State {
+	case StateEmpty:
+		t.SetState(StateFilled)
+
+	case StateFilled:
+		t.SetState(StateEmpty)
+	}
 }
