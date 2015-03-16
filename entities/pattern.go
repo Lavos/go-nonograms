@@ -2,49 +2,72 @@ package entities
 
 import (
 	"log"
+	"io"
+	"bytes"
+	"crypto/rand"
+	"encoding/binary"
+	"encoding/base64"
 )
 
 var (
-	ExamplePattern = []byte{10,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-		1, 1, 1, 1, 0, 0, 0, 1, 0, 0,
-		1, 1, 0, 1, 0, 0, 0, 0, 0, 0,
-		1, 1, 0, 1, 0, 1, 0, 0, 0, 0,
-		1, 1, 0, 1, 0, 0, 0, 1, 0, 0,
-		1, 1, 0, 1, 0, 1, 0, 0, 0, 0,
-		1, 0, 1, 1, 0, 0, 0, 0, 0, 0,
-		1, 0, 1, 1, 0, 0, 0, 1, 0, 0,
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 1,
+	Patterns5x5 = [1][5][5]byte{
+		{
+			{ 1, 0, 0, 0, 0 },
+			{ 1, 0, 0, 0, 0 },
+			{ 1, 0, 0, 0, 0 },
+			{ 1, 0, 0, 0, 0 },
+			{ 1, 0, 0, 0, 0 },
+		},
 	}
 )
 
-type Pattern struct {
-	Columns int
-	Rows int
-	Bytes []byte
-	Matrix [][]byte
+type Patterner interface {
+	Matrix() Pattern
+	String() string
 }
 
-func PatternFromBytes (p []byte) *Pattern {
-	columns := int(p[0])
-	tiles := p[1:len(p)]
-	rows := len(tiles) / columns
+type Pattern [][]byte
 
-	log.Printf("len(tiles): %d, columns: %d, rows: %d", len(tiles), columns, rows)
+type Pattern5x5 [5][5]byte
 
-	matrix := make([][]byte, rows)
+func (p *Pattern5x5) Matrix() Pattern {
+	m := make([][]byte, 5)
 
-	for x := 0; x < rows; x++ {
-		matrix[x] = tiles[(x * rows):((x * rows) + columns)]
+	for y, row := range p {
+		row_slice := make([]byte, 5)
+		copy(row_slice, row[:])
+		m[y] = row_slice
 	}
 
-	log.Printf("Matrix: %#v", matrix)
+	return m
+}
 
-	return &Pattern{
-		Columns: columns,
-		Rows: rows,
-		Bytes: p,
-		Matrix: matrix,
+func (p *Pattern5x5) EncodeTo(w io.Writer) {
+	binary.Write(w, binary.LittleEndian, p)
+}
+
+func (p *Pattern5x5) DecodeFrom(r io.Reader) {
+	binary.Read(r, binary.LittleEndian, p)
+}
+
+func (p *Pattern5x5) String() string {
+	var b bytes.Buffer
+	p.EncodeTo(&b)
+	return base64.StdEncoding.EncodeToString(b.Bytes())
+}
+
+func (p *Pattern5x5) Randomize() {
+	log.Printf("Original: %#v", p)
+
+	for y, row := range p {
+		rand.Read(row[:])
+
+		for x, b := range row {
+			row[x] = b % 2
+		}
+
+		p[y] = row
 	}
+
+	log.Printf("Randomized: %#v", p)
 }

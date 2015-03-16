@@ -17,8 +17,10 @@ type Game struct {
 }
 
 func New() *Game {
+	start := time.Now()
+
 	runtime.LockOSThread()
-	renderWindow := sf.NewRenderWindow(sf.VideoMode{800, 600, 32}, "Events (GoSFML2)", sf.StyleDefault, sf.DefaultContextSettings())
+	renderWindow := sf.NewRenderWindow(sf.VideoMode{960, 544, 32}, "Nonograms", sf.StyleClose, sf.DefaultContextSettings())
 
 	s := make([]staters.Stater, 1)
 	s[0] = staters.NewFirst()
@@ -29,6 +31,7 @@ func New() *Game {
 		CurrentState: s[0],
 	}
 
+	log.Printf("New game in: %s", time.Now().Sub(start))
 	return game
 }
 
@@ -42,7 +45,7 @@ func (g *Game) Run () {
 	for g.Window.IsOpen(){
 		select {
 		case <-t.C:
-			// log.Printf("FPS: %d", fps)
+			log.Printf("FPS: %d", fps)
 			fps = 0
 
 		default:

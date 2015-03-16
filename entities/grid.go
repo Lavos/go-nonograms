@@ -2,39 +2,75 @@ package entities
 
 import (
 	"log"
-	"strings"
-	"strconv"
 	sf "bitbucket.org/krepa098/gosfml2"
 )
 
+const (
+	ModeFill = iota
+	ModeCrossOut
+
+	GridSize = 16
+)
+
+func GridToPixelsf (grid_index int) float32 {
+	return float32(GridToPixelsi(grid_index))
+}
+
+func GridToPixelsi (grid_index int) int {
+	return GridSize * grid_index
+}
+
 type Grid struct {
-	Pattern *Pattern
+	Solved bool
+	Patterner Patterner
+
+	Drawers []sf.Drawer
+
+	SuccessMessage *sf.Text
 
 	Texts []*sf.Text
 	Tiles [][]*Tile
 
 	MousePosition sf.EventMouseMoved
+	Mode byte
 	HighlightedTile *Tile
 }
 
-func NewGrid (pattern *Pattern) *Grid {
+func NewGrid (p Patterner) *Grid {
+	matrix := p.Matrix()
+	log.Printf("Matrix: %#v", matrix)
+	rows := len(matrix)
+	columns := len(matrix[0])
+
 	font, _ := sf.NewFontFromFile("TerminalVector.ttf")
-	tiles := make([][]*Tile, pattern.Rows)
-	texts := make([]*sf.Text, pattern.Rows)
+	texture, err := sf.NewTextureFromFile("../assets/tile.png", nil)
 
-	row_hints := make([][]int, pattern.Rows)
-	column_hints := make([][]int, pattern.Columns)
+	log.Printf("Texture Error: %s", err)
+	hint_texture, err := sf.NewTextureFromFile("../assets/hints.png", nil)
 
-	column_consecutive := make([]int, len(pattern.Matrix[0]))
+	log.Printf("Texture Error: %s", err)
 
-	// set positions, states, and hints
-	for y, row := range pattern.Matrix {
+	drawers := make([]sf.Drawer, 0)
+	tiles := make([][]*Tile, rows)
+
+	success_message, _ := sf.NewText(font)
+	success_message.SetCharacterSize(12)
+	success_message.SetString("Completed!")
+	success_message.SetPosition(sf.Vector2f{10, 120})
+
+
+	row_hints := make([][]int, rows)
+	column_hints := make([][]int, columns)
+	column_consecutive := make([]int, columns)
+
+	// set positions, set states, and determine hints
+	for y, row := range matrix {
 		var row_consecutive int
 
-		row_slice := make([]*Tile, len(pattern.Matrix))
+		row_slice := make([]*Tile, columns)
 
 		for x, b := range row {
-			t := NewTile()
+			t := NewTile(texture)
 
 			if b == StateFilled {
 				row_consecutive++
@@ -52,15 +88,14 @@ func NewGrid (pattern *Pattern) *Grid {
 
 				row_consecutive = 0
 				column_consecutive[x] = 0
-
-				t.SetState(StateEmpty)
 			}
 
-			t.Shape.SetPosition(sf.Vector2f{float32((x * 25) + 100), float32((y * 25) + 100)});
+			t.Sprite.SetPosition(sf.Vector2f{GridToPixelsf(x +11), GridToPixelsf(y +11)});
 
 			row_slice[x] = t
+			drawers = append(drawers, t)
 
-			if y == len(pattern.Matrix)-1 {
+			if y == rows-1 {
 				if column_consecutive[x] != 0 {
 					column_hints[x] = append(column_hints[x], column_consecutive[x])
 					continue
@@ -79,49 +114,44 @@ func NewGrid (pattern *Pattern) *Grid {
 		tiles[y] = row_slice
 	}
 
-	for i, h := range row_hints {
-		s := make([]string, len(h))
-
-		for ih, hn := range h {
-			s[ih] = strconv.Itoa(hn)
+	for y, row := range row_hints {
+		for x, n := range row {
+			h := NewHint(hint_texture, n)
+			h.Sprite.SetPosition(sf.Vector2f{ GridToPixelsf(11 + x - len(row)), GridToPixelsf(y + 11) })
+			drawers = append(drawers, h)
 		}
-
-		text, _ := sf.NewText(font)
-		text.SetCharacterSize(12)
-		text.SetString(strings.Join(s, " "))
-		text.SetPosition(sf.Vector2f{float32(50), float32(103 + (i * 25))})
-
-		texts[i] = text
 	}
 
-	for i, h := range column_hints {
-		s := make([]string, len(h))
-
-		for ih, hn := range h {
-			s[ih] = strconv.Itoa(hn)
+	for x, column := range column_hints {
+		for y, n := range column {
+			h := NewHint(hint_texture, n)
+			h.Sprite.SetPosition(sf.Vector2f{ GridToPixelsf(x + 11), GridToPixelsf(11 + y - len(column)) })
+			drawers = append(drawers, h)
 		}
-
-		log.Printf("Column %d: %s", i, strings.Join(s, " "))
 	}
 
 	g := &Grid{
-		Pattern: pattern,
+		Patterner: p,
+		Drawers: drawers,
 		Tiles: tiles,
-		Texts: texts,
+		SuccessMessage: success_message,
 	}
 
 	return g
 }
 
 func (g *Grid) Logic() {
-	// probably don't need to do this 60/sec
-	log.Printf("Solved: %t", g.CheckIfSolved())
+	g.Solved = g.CheckIfSolved()
 }
 
 func (g *Grid) CheckIfSolved() bool {
-	for y, row := range g.Pattern.Matrix {
+	for y, row := range g.Patterner.Matrix() {
 		for x, b := range row {
-			if g.Tiles[y][x].State != b {
+			if b == StateFilled && g.Tiles[y][x].State != b {
+				return false
+			}
+
+			if b == StateEmpty && g.Tiles[y][x].State == StateFilled {
 				return false
 			}
 		}
@@ -131,19 +161,26 @@ func (g *Grid) CheckIfSolved() bool {
 }
 
 func (g *Grid) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
-	for _, text := range g.Texts {
-		text.Draw(target, renderStates)
+	if g.Solved {
+		g.SuccessMessage.Draw(target, renderStates)
 	}
 
-	for _, row := range g.Tiles {
-		for _, cell := range row {
-			cell.Shape.Draw(target, renderStates)
-		}
+	for _, d := range g.Drawers {
+		d.Draw(target, renderStates)
 	}
 }
 
 func (g *Grid) HandleEvent(event sf.Event) {
 	switch event.Type() {
+	case sf.EventTypeMouseButtonPressed:
+		if sf.IsMouseButtonPressed(sf.MouseLeft) {
+			g.Mode = ModeFill
+		}
+
+		if sf.IsMouseButtonPressed(sf.MouseRight) {
+			g.Mode = ModeCrossOut
+		}
+
 	case sf.EventTypeMouseMoved:
 		var b sf.FloatRect
 		g.MousePosition = event.(sf.EventMouseMoved)
@@ -152,7 +189,7 @@ func (g *Grid) HandleEvent(event sf.Event) {
 highlight:
 		for _, row := range g.Tiles {
 			for _, tile := range row {
-				b = tile.Shape.GetGlobalBounds()
+				b = tile.Sprite.GetGlobalBounds()
 
 				if b.Contains(float32(g.MousePosition.X), float32(g.MousePosition.Y)) {
 					target_tile = tile
@@ -177,10 +214,17 @@ highlight:
 button:
 		for _, row := range g.Tiles {
 			for _, tile := range row {
-				b = tile.Shape.GetGlobalBounds()
+				b = tile.Sprite.GetGlobalBounds()
 
 				if b.Contains(float32(g.MousePosition.X), float32(g.MousePosition.Y)) {
-					tile.Activate()
+					switch g.Mode {
+					case ModeFill:
+						tile.Fill()
+
+					case ModeCrossOut:
+						tile.CrossOut()
+					}
+
 					break button
 				}
 			}

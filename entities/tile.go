@@ -10,43 +10,78 @@ const (
 	StateCrossedOut
 )
 
+var (
+	TextureRects = []sf.IntRect{
+		sf.IntRect{
+			Top: 0,
+			Left: 0,
+			Width: GridSize,
+			Height: GridSize,
+		},
+
+		sf.IntRect{
+			Top: 0,
+			Left: GridToPixelsi(1),
+			Width: GridSize,
+			Height: GridSize,
+		},
+
+		sf.IntRect{
+			Top: 0,
+			Left: GridToPixelsi(2),
+			Width: GridSize,
+			Height: GridSize,
+		},
+	}
+)
 
 type Tile struct {
-	Shape *sf.RectangleShape
+	Sprite *sf.Sprite
 
 	State byte
 }
 
-func NewTile() *Tile {
-	shape, _ := sf.NewRectangleShape()
-
-	shape.SetSize(sf.Vector2f{20, 20})
+func NewTile(texture *sf.Texture) *Tile {
+	sprite, _ := sf.NewSprite(texture)
+	sprite.SetTextureRect(TextureRects[StateEmpty])
 
 	return &Tile{
-		Shape: shape,
+		Sprite: sprite,
 	}
 }
 
 func (t *Tile) SetHighlight(enabled bool) {
+	if enabled {
+		t.Sprite.SetColor(sf.ColorYellow())
+	} else {
+		t.Sprite.SetColor(sf.ColorWhite())
+	}
+}
 
+func (t *Tile) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
+	t.Sprite.Draw(target, renderStates)
 }
 
 func (t *Tile) SetState(state byte) {
 	t.State = state
 
-	switch state {
-	case StateEmpty:
-		t.Shape.SetFillColor(sf.ColorWhite())
+	t.Sprite.SetTextureRect(TextureRects[state])
+}
+
+func (t *Tile) CrossOut() {
+	switch t.State {
+	case StateCrossedOut:
+		t.SetState(StateEmpty)
 
 	case StateFilled:
-		t.Shape.SetFillColor(sf.ColorBlack())
+		t.SetState(StateCrossedOut)
 
-	case StateCrossedOut:
-		t.Shape.SetFillColor(sf.ColorRed())
+	case StateEmpty:
+		t.SetState(StateCrossedOut)
 	}
 }
 
-func (t *Tile) Activate() {
+func (t *Tile) Fill() {
 	switch t.State {
 	case StateEmpty:
 		t.SetState(StateFilled)
