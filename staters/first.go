@@ -30,7 +30,7 @@ func NewFirst () *First {
 
 	g := entities.NewGrid(p)
 
-	drawers := []sf.Drawer{ background, g }
+	drawers := []sf.Drawer{ g }
 	eventers := []Eventer{ g }
 	logicers := []Logicer { g }
 

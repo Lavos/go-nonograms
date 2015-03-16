@@ -59,6 +59,7 @@ func (t *Tile) SetHighlight(enabled bool) {
 }
 
 func (t *Tile) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
+	return 
 	t.Sprite.Draw(target, renderStates)
 }
 

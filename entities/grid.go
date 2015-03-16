@@ -8,8 +8,6 @@ import (
 const (
 	ModeFill = iota
 	ModeCrossOut
-
-	GridSize = 16
 )
 
 func GridToPixelsf (grid_index int) float32 {
@@ -21,6 +19,8 @@ func GridToPixelsi (grid_index int) int {
 }
 
 type Grid struct {
+	TileMap *sf.VertexArray
+
 	Solved bool
 	Patterner Patterner
 
@@ -28,7 +28,6 @@ type Grid struct {
 
 	SuccessMessage *sf.Text
 
-	Texts []*sf.Text
 	Tiles [][]*Tile
 
 	MousePosition sf.EventMouseMoved
@@ -52,6 +51,11 @@ func NewGrid (p Patterner) *Grid {
 
 	drawers := make([]sf.Drawer, 0)
 	tiles := make([][]*Tile, rows)
+
+	tm := NewTileMap()
+	tm.SetSize(rows, columns)
+
+	drawers = append(drawers, tm)
 
 	success_message, _ := sf.NewText(font)
 	success_message.SetCharacterSize(12)
