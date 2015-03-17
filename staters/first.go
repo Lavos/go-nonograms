@@ -23,12 +23,13 @@ func NewFirst () *First {
 		Height: 544,
 	})
 
-	p := new(entities.Pattern5x5)
-	p.Randomize()
+	m := entities.NewMatrix(5, 5)
+	m.Randomize()
 
-	log.Printf("First has: %#v", p)
+	log.Printf("Matrix: %#v", m)
 
-	g := entities.NewGrid(p)
+	g := entities.NewGrid()
+	g.Render(m)
 
 	drawers := []sf.Drawer{ g }
 	eventers := []Eventer{ g }

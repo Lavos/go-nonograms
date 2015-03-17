@@ -53,7 +53,7 @@ func (h *Hint) SetState(state byte) {
 	h.Sprite.SetColor(sf.ColorRed())
 }
 
-func (h *Hint) CrossOut() {
+/* func (h *Hint) CrossOut() {
 	switch h.State {
 	case StateCrossedOut:
 		h.SetState(StateEmpty)
@@ -61,4 +61,4 @@ func (h *Hint) CrossOut() {
 	case StateEmpty:
 		h.SetState(StateCrossedOut)
 	}
-}
+} */

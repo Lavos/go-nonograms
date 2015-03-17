@@ -18,7 +18,6 @@ type TileMap struct {
 	Height int
 }
 
-
 func NewTileMap () *TileMap {
 	vm, _ := sf.NewVertexArray()
 	vm.PrimitiveType = sf.PrimitiveQuads
@@ -40,9 +39,35 @@ func (t *TileMap) SetSize (width, height int) {
 	t.Populate()
 }
 
+
+
+func (t *TileMap) QuadFromCoords(x, y int) ([]sf.Vertex, bool) {
+	if x > t.Width -1 || x < 0 || y > t.Height -1 || y < 0 {
+		return nil, false
+	}
+
+	index := (y * t.Height * 4) + (x * 4)
+	return t.VertexArray.Vertices[index:index+4], true
+}
+
+func (t *TileMap) CoordsFromPosition(x, y int) (int, int) {
+	coord_x := (x - (Offset * GridSize)) / GridSize
+	coord_y := (y - (Offset * GridSize)) / GridSize
+
+	return coord_x, coord_y
+}
+
+func (t *TileMap) SetState(quad []sf.Vertex, state byte) {
+	base := int(state)
+
+	quad[0].TexCoords = sf.Vector2f{ GridToPixelsf(base), GridToPixelsf(0) }
+	quad[1].TexCoords = sf.Vector2f{ GridToPixelsf(base + 1), GridToPixelsf(0) }
+	quad[2].TexCoords = sf.Vector2f{ GridToPixelsf(base + 1), GridToPixelsf(1) }
+	quad[3].TexCoords = sf.Vector2f{ GridToPixelsf(base), GridToPixelsf(1) }
+}
+
 func (t *TileMap) Populate () {
-	log.Printf("Vertex count: %d", t.VertexArray.GetVertexCount())
-	log.Printf("TileMap: %#v", t)
+	log.Printf("Vertex Count: %d", t.VertexArray.GetVertexCount())
 
 	var q []sf.Vertex
 	var index int
@@ -50,7 +75,6 @@ func (t *TileMap) Populate () {
 	for y := 0; y < t.Height; y++ {
 		for x := 0; x < t.Width; x++ {
 			index = (x + (y * t.Height)) * 4
-			log.Printf("Index: %d", index)
 
 			q = t.VertexArray.Vertices[index:index+4]
 
@@ -64,12 +88,7 @@ func (t *TileMap) Populate () {
 			q[2].Position = sf.Vector2f{ GridToPixelsf(Offset + x+1), GridToPixelsf(Offset + y+1) }
 			q[3].Position = sf.Vector2f{ GridToPixelsf(Offset + x), GridToPixelsf(Offset + y+1) }
 
-			q[0].TexCoords = sf.Vector2f{ GridToPixelsf(0), GridToPixelsf(0) }
-			q[1].TexCoords = sf.Vector2f{ GridToPixelsf(1), GridToPixelsf(0) }
-			q[2].TexCoords = sf.Vector2f{ GridToPixelsf(1), GridToPixelsf(1) }
-			q[3].TexCoords = sf.Vector2f{ GridToPixelsf(0), GridToPixelsf(1) }
-
-			log.Printf("Origin: %#v", q[0].Position)
+			t.SetState(q, ByteEmpty)
 		}
 	}
 }
