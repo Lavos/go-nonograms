@@ -9,9 +9,9 @@ var (
 )
 
 func init(){
-	HintTextureRects = make([]sf.IntRect, 10)
+	HintTextureRects = make([]sf.IntRect, 20)
 
-	for x := 0; x < 10; x++ {
+	for x := 0; x < 20; x++ {
 		HintTextureRects[x] = sf.IntRect{
 			Top: 0,
 			Left: GridToPixelsi(x),

@@ -7,12 +7,13 @@ import (
 )
 
 const (
-	ModeFill = iota
+	ModeEmpty = iota
+	ModeFill
 	ModeCrossOut
 )
 
 func TrackTime (start time.Time, name string) {
-	log.Printf("%s: %s", name, time.Since(start))
+	// log.Printf("%s: %s", name, time.Since(start))
 }
 
 func GridToPixelsf (grid_index int) float32 {
@@ -63,10 +64,12 @@ func (g *Grid) Render(matrix Matrix) {
 	rows := len(matrix)
 	columns := len(matrix[0])
 
+	log.Printf("Rows: %d Columns: %d", rows, columns)
+
 	g.WorkingMatrix = NewMatrix(rows, columns)
 	g.GoalMatrix = matrix
 
-	g.TileMap.SetSize(columns, rows)
+	g.TileMap.SetSize(rows, columns)
 
 	g.Hints = make([]sf.Drawer, 0)
 	row_hints := make([][]int, rows)
@@ -133,10 +136,15 @@ func (g *Grid) Logic() {
 }
 
 func (g *Grid) CheckIfSolved() bool {
+	defer TrackTime(time.Now(), "CheckIfSolved")
 
 	for y, row := range g.GoalMatrix {
 		for x, b := range row {
-			if b != g.WorkingMatrix[y][x] {
+			if b == ByteFilled && b != g.WorkingMatrix[y][x] {
+				return false
+			}
+
+			if g.WorkingMatrix[y][x] == ByteFilled && b != ByteFilled {
 				return false
 			}
 		}
@@ -177,21 +185,20 @@ func (g *Grid) HandleEvent(event sf.Event) {
 		x, y := g.TileMap.CoordsFromPosition(g.MousePosition.X, g.MousePosition.Y)
 		quad, ok := g.TileMap.QuadFromCoords(x, y)
 
-		log.Printf("x: %d, y: %d", x, y)
-		log.Printf("quad: %#v, ok: %t", quad, ok)
-
 		if !ok {
 			return
 		}
-
-		log.Printf("Working: %d", g.WorkingMatrix[y][x])
 
 		switch g.WorkingMatrix[y][x] {
 		case ByteFilled:
 			g.WorkingMatrix[y][x] = ByteEmpty
 
 		case ByteEmpty:
-			g.WorkingMatrix[y][x] = ByteFilled
+			log.Printf("Setting: %d", g.Mode)
+			g.WorkingMatrix[y][x] = g.Mode
+
+		case ByteCrossedOut:
+			g.WorkingMatrix[y][x] = ByteEmpty
 		}
 
 		g.TileMap.SetState(quad, g.WorkingMatrix[y][x])

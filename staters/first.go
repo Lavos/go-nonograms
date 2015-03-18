@@ -23,7 +23,7 @@ func NewFirst () *First {
 		Height: 544,
 	})
 
-	m := entities.NewMatrix(5, 5)
+	m := entities.NewMatrix(20, 20)
 	m.Randomize()
 
 	log.Printf("Matrix: %#v", m)
@@ -31,7 +31,7 @@ func NewFirst () *First {
 	g := entities.NewGrid()
 	g.Render(m)
 
-	drawers := []sf.Drawer{ g }
+	drawers := []sf.Drawer{ background, g }
 	eventers := []Eventer{ g }
 	logicers := []Logicer { g }
 

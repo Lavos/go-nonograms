@@ -7,6 +7,7 @@ import (
 const (
 	ByteEmpty = iota
 	ByteFilled
+	ByteCrossedOut
 )
 
 type Matrix [][]byte
