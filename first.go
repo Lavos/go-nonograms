@@ -1,9 +1,8 @@
-package staters
+package nonograms
 
 import (
 	"log"
 	sf "bitbucket.org/krepa098/gosfml2"
-	"github.com/Lavos/nonograms/entities"
 )
 
 type First struct {
@@ -23,12 +22,12 @@ func NewFirst () *First {
 		Height: 544,
 	})
 
-	m := entities.NewMatrix(20, 20)
+	m := NewMatrix(10, 10)
 	m.Randomize()
 
 	log.Printf("Matrix: %#v", m)
 
-	g := entities.NewGrid()
+	g := NewGrid()
 	g.Render(m)
 
 	drawers := []sf.Drawer{ background, g }

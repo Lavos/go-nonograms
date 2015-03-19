@@ -1,4 +1,4 @@
-package staters
+package nonograms
 
 import (
 	sf "bitbucket.org/krepa098/gosfml2"

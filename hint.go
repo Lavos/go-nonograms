@@ -1,6 +1,7 @@
-package entities
+package nonograms
 
 import (
+	"log"
 	sf "bitbucket.org/krepa098/gosfml2"
 )
 
@@ -44,21 +45,41 @@ func (h *Hint) SetHighlight(enabled bool) {
 	}
 }
 
+func (h *Hint) HandleEvent(event sf.Event) {
+	switch event.Type() {
+	case sf.EventTypeMouseButtonReleased:
+		bounds := h.Sprite.GetGlobalBounds()
+
+		if bounds.Contains(float32(CurrentMousePosition.X), float32(CurrentMousePosition.Y)) {
+			h.ToggleState()
+		}
+	}
+}
+
 func (h *Hint) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 	h.Sprite.Draw(target, renderStates)
 }
 
 func (h *Hint) SetState(state byte) {
 	h.State = state
-	h.Sprite.SetColor(sf.ColorRed())
+
+	switch h.State {
+	case ByteEmpty:
+		h.Sprite.SetColor(sf.ColorWhite())
+
+	case ByteCrossedOut:
+		h.Sprite.SetColor(sf.Color{ 255, 255, 255, 125 })
+	}
 }
 
-/* func (h *Hint) CrossOut() {
-	switch h.State {
-	case StateCrossedOut:
-		h.SetState(StateEmpty)
+func (h *Hint) ToggleState() {
+	log.Printf("toggle state")
 
-	case StateEmpty:
-		h.SetState(StateCrossedOut)
+	switch h.State {
+	case ByteCrossedOut:
+		h.SetState(ByteEmpty)
+
+	case ByteEmpty:
+		h.SetState(ByteCrossedOut)
 	}
-} */
+}

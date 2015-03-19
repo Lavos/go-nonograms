@@ -1,4 +1,4 @@
-package entities
+package nonograms
 
 import (
 	"log"
@@ -13,7 +13,7 @@ const (
 )
 
 func TrackTime (start time.Time, name string) {
-	// log.Printf("%s: %s", name, time.Since(start))
+	log.Printf("%s: %s", name, time.Since(start))
 }
 
 func GridToPixelsf (grid_index int) float32 {
@@ -32,12 +32,12 @@ type Grid struct {
 	GoalMatrix Matrix
 	WorkingMatrix Matrix
 
-	Hints []sf.Drawer
+	Drawers []sf.Drawer
+	Eventers []Eventer
 
 	SuccessMessage *sf.Text
 	HintTexture *sf.Texture
 
-	MousePosition sf.EventMouseMoved
 	Mode byte
 }
 
@@ -71,7 +71,8 @@ func (g *Grid) Render(matrix Matrix) {
 
 	g.TileMap.SetSize(rows, columns)
 
-	g.Hints = make([]sf.Drawer, 0)
+	g.Drawers = make([]sf.Drawer, 0)
+	g.Eventers = make([]Eventer, 0)
 	row_hints := make([][]int, rows)
 	column_hints := make([][]int, columns)
 	column_consecutive := make([]int, columns)
@@ -118,7 +119,8 @@ func (g *Grid) Render(matrix Matrix) {
 		for x, n := range row {
 			h := NewHint(g.HintTexture, n)
 			h.Sprite.SetPosition(sf.Vector2f{ GridToPixelsf(11 + x - len(row)), GridToPixelsf(y + 11) })
-			g.Hints = append(g.Hints, h)
+			g.Drawers = append(g.Drawers, h)
+			g.Eventers = append(g.Eventers, h)
 		}
 	}
 
@@ -126,7 +128,8 @@ func (g *Grid) Render(matrix Matrix) {
 		for y, n := range column {
 			h := NewHint(g.HintTexture, n)
 			h.Sprite.SetPosition(sf.Vector2f{ GridToPixelsf(x + 11), GridToPixelsf(11 + y - len(column)) })
-			g.Hints = append(g.Hints, h)
+			g.Drawers = append(g.Drawers, h)
+			g.Eventers = append(g.Eventers, h)
 		}
 	}
 }
@@ -136,8 +139,6 @@ func (g *Grid) Logic() {
 }
 
 func (g *Grid) CheckIfSolved() bool {
-	defer TrackTime(time.Now(), "CheckIfSolved")
-
 	for y, row := range g.GoalMatrix {
 		for x, b := range row {
 			if b == ByteFilled && b != g.WorkingMatrix[y][x] {
@@ -158,7 +159,7 @@ func (g *Grid) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 		g.SuccessMessage.Draw(target, renderStates)
 	}
 
-	for _, h := range g.Hints {
+	for _, h := range g.Drawers {
 		h.Draw(target, renderStates)
 	}
 
@@ -178,15 +179,12 @@ func (g *Grid) HandleEvent(event sf.Event) {
 			g.Mode = ModeCrossOut
 		}
 
-	case sf.EventTypeMouseMoved:
-		g.MousePosition = event.(sf.EventMouseMoved)
-
 	case sf.EventTypeMouseButtonReleased:
-		x, y := g.TileMap.CoordsFromPosition(g.MousePosition.X, g.MousePosition.Y)
+		x, y := g.TileMap.CoordsFromPosition(CurrentMousePosition.X, CurrentMousePosition.Y)
 		quad, ok := g.TileMap.QuadFromCoords(x, y)
 
 		if !ok {
-			return
+			break
 		}
 
 		switch g.WorkingMatrix[y][x] {
@@ -202,5 +200,9 @@ func (g *Grid) HandleEvent(event sf.Event) {
 		}
 
 		g.TileMap.SetState(quad, g.WorkingMatrix[y][x])
+	}
+
+	for _, e := range g.Eventers {
+		e.HandleEvent(event)
 	}
 }

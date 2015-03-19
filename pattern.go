@@ -1,4 +1,4 @@
-package entities
+package nonograms
 
 import (
 	"crypto/rand"

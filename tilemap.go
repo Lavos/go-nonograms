@@ -1,7 +1,8 @@
-package entities
+package nonograms
 
 import (
 	"log"
+	"math"
 	sf "bitbucket.org/krepa098/gosfml2"
 )
 
@@ -31,8 +32,6 @@ func NewTileMap () *TileMap {
 }
 
 func (t *TileMap) SetSize (height, width int) {
-	log.Printf("Height: %d Width: %d", height, width)
-
 	destination_size := width * height * 4
 	t.Width = width
 	t.Height = height
@@ -51,14 +50,10 @@ func (t *TileMap) QuadFromCoords(x, y int) ([]sf.Vertex, bool) {
 }
 
 func (t *TileMap) CoordsFromPosition(x, y int) (int, int) {
-	log.Printf("Mouse Position, x: %d y: %d", x, y)
+	coord_x := float64(x - (Offset * GridSize)) / float64(GridSize)
+	coord_y := float64(y - (Offset * GridSize)) / float64(GridSize)
 
-	coord_x := (x - (Offset * GridSize)) / GridSize
-	coord_y := (y - (Offset * GridSize)) / GridSize
-
-	log.Printf("Grid, x: %d y: %d", coord_x, coord_y)
-
-	return coord_x, coord_y
+	return int(math.Floor(coord_x)), int(math.Floor(coord_y))
 }
 
 func (t *TileMap) SetState(quad []sf.Vertex, state byte) {

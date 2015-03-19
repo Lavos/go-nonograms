@@ -5,15 +5,17 @@ import (
 	"runtime"
 	"time"
 	sf "bitbucket.org/krepa098/gosfml2"
+)
 
-	"github.com/Lavos/nonograms/staters"
+var (
+	CurrentMousePosition sf.EventMouseMoved
 )
 
 type Game struct {
 	Window *sf.RenderWindow
 
-	CurrentState staters.Stater
-	States []staters.Stater
+	CurrentState Stater
+	States []Stater
 }
 
 func New() *Game {
@@ -22,8 +24,8 @@ func New() *Game {
 	runtime.LockOSThread()
 	renderWindow := sf.NewRenderWindow(sf.VideoMode{960, 544, 32}, "Nonograms", sf.StyleClose, sf.DefaultContextSettings())
 
-	s := make([]staters.Stater, 1)
-	s[0] = staters.NewFirst()
+	s := make([]Stater, 1)
+	s[0] = NewFirst()
 
 	game := &Game{
 		Window: renderWindow,
@@ -45,7 +47,7 @@ func (g *Game) Run () {
 	for g.Window.IsOpen(){
 		select {
 		case <-t.C:
-			log.Printf("FPS: %d", fps)
+			// log.Printf("FPS: %d", fps)
 			fps = 0
 
 		default:
@@ -55,6 +57,9 @@ func (g *Game) Run () {
 				switch event.Type() {
 				case sf.EventTypeClosed:
 					g.Window.Close()
+
+				case sf.EventTypeMouseMoved:
+					CurrentMousePosition = event.(sf.EventMouseMoved)
 
 				default:
 					g.CurrentState.HandleEvent(event)
