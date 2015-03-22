@@ -6,6 +6,8 @@ import (
 )
 
 type First struct {
+	Grid *Grid
+
 	Drawers []sf.Drawer
 	Eventers []Eventer
 	Logicers []Logicer
@@ -22,7 +24,7 @@ func NewFirst () *First {
 		Height: 544,
 	})
 
-	m := NewMatrix(10, 10)
+	m := NewMatrix(5, 5)
 	m.Randomize()
 
 	log.Printf("Matrix: %#v", m)
@@ -35,6 +37,7 @@ func NewFirst () *First {
 	logicers := []Logicer { g }
 
 	return &First{
+		Grid: g,
 		Drawers: drawers,
 		Eventers: eventers,
 		Logicers: logicers,
@@ -56,5 +59,12 @@ func (f *First) HandleEvent(event sf.Event) {
 func (f *First) Logic() {
 	for _, e := range f.Logicers {
 		e.Logic()
+	}
+
+	if f.Grid.Solved {
+		m := NewMatrix(5, 5)
+		m.Randomize()
+
+		f.Grid.Render(m)
 	}
 }

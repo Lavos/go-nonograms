@@ -8,6 +8,7 @@ const (
 	ByteEmpty = iota
 	ByteFilled
 	ByteCrossedOut
+	ByteSuccess
 )
 
 type Matrix [][]byte

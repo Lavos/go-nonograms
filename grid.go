@@ -61,6 +61,7 @@ func NewGrid () *Grid {
 }
 
 func (g *Grid) Render(matrix Matrix) {
+	g.Solved = false
 	rows := len(matrix)
 	columns := len(matrix[0])
 
@@ -167,7 +168,7 @@ func (g *Grid) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 }
 
 func (g *Grid) HandleEvent(event sf.Event) {
-	defer TrackTime(time.Now(), "HandleEvent")
+	// defer TrackTime(time.Now(), "HandleEvent")
 
 	switch event.Type() {
 	case sf.EventTypeMouseButtonPressed:
