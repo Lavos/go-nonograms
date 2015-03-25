@@ -39,18 +39,24 @@ func New() *Game {
 
 func (g *Game) Run () {
 	log.Print("Running...")
-	g.Window.SetFramerateLimit(60)
+	// g.Window.SetFramerateLimit(60)
+
 
 	t := time.NewTicker(time.Second)
+	limit := time.NewTicker(time.Second / 60)
+
+	var frames uint64
 	var fps int
 
 	for g.Window.IsOpen(){
 		select {
 		case <-t.C:
-			// log.Printf("FPS: %d", fps)
+			log.Printf("FPS: %d", fps)
+			log.Printf("Frames: %d", frames)
 			fps = 0
 
-		default:
+		case <-limit.C:
+			frames++
 			fps++
 
 			for event := g.Window.PollEvent(); event != nil; event = g.Window.PollEvent() {

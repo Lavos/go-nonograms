@@ -193,7 +193,6 @@ func (g *Grid) HandleEvent(event sf.Event) {
 			g.WorkingMatrix[y][x] = ByteEmpty
 
 		case ByteEmpty:
-			log.Printf("Setting: %d", g.Mode)
 			g.WorkingMatrix[y][x] = g.Mode
 
 		case ByteCrossedOut:

@@ -7,6 +7,7 @@ import (
 
 type First struct {
 	Grid *Grid
+	Timer *Timer
 
 	Drawers []sf.Drawer
 	Eventers []Eventer
@@ -32,12 +33,16 @@ func NewFirst () *First {
 	g := NewGrid()
 	g.Render(m)
 
-	drawers := []sf.Drawer{ background, g }
+	timer := NewTimer()
+	timer.Start()
+
+	drawers := []sf.Drawer{ background, g, timer }
 	eventers := []Eventer{ g }
 	logicers := []Logicer { g }
 
 	return &First{
 		Grid: g,
+		Timer: timer,
 		Drawers: drawers,
 		Eventers: eventers,
 		Logicers: logicers,
@@ -62,9 +67,11 @@ func (f *First) Logic() {
 	}
 
 	if f.Grid.Solved {
+		f.Timer.Stop()
 		m := NewMatrix(5, 5)
 		m.Randomize()
 
 		f.Grid.Render(m)
+		f.Timer.Start()
 	}
 }
