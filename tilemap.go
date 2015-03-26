@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	GridSize = 16
+	TextureSize = 15
 	Offset = 11
 )
 

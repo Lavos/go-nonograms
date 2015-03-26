@@ -36,7 +36,7 @@ func NewFirst () *First {
 	timer := NewTimer()
 	timer.Start()
 
-	drawers := []sf.Drawer{ background, g, timer }
+	drawers := []sf.Drawer{ g, timer }
 	eventers := []Eventer{ g }
 	logicers := []Logicer { g }
 

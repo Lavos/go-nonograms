@@ -27,6 +27,8 @@ func GridToPixelsi (grid_index int) int {
 type Grid struct {
 	TileMap *TileMap
 
+	Trays []*Tray
+
 	Solved bool
 
 	GoalMatrix Matrix
@@ -44,6 +46,17 @@ type Grid struct {
 func NewGrid () *Grid {
 	tm := NewTileMap()
 
+	tray2 := NewTray(sf.Vector2f{ 700, 300 }, sf.ColorRed())
+	tray2.SetSize(5, 5)
+
+	tray3 := NewTray(sf.Vector2f{ 0, 0 }, sf.Color{251, 233, 194, 255})
+	tray3.SetSize(20, 45)
+
+	trays := []*Tray{
+		tray2,
+		tray3,
+	}
+
 	font, _ := sf.NewFontFromFile("TerminalVector.ttf")
 	success_message, _ := sf.NewText(font)
 	success_message.SetCharacterSize(12)
@@ -54,6 +67,7 @@ func NewGrid () *Grid {
 
 	return &Grid{
 		TileMap: tm,
+		Trays: trays,
 
 		SuccessMessage: success_message,
 		HintTexture: hint_texture,
@@ -165,6 +179,10 @@ func (g *Grid) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 	}
 
 	g.TileMap.Draw(target, renderStates)
+
+	for _, t := range g.Trays {
+		t.Draw(target, renderStates)
+	}
 }
 
 func (g *Grid) HandleEvent(event sf.Event) {
