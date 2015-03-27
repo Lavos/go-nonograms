@@ -13,22 +13,27 @@ var (
 
 type Game struct {
 	Window *sf.RenderWindow
+	TextureManager *TextureManager
 
 	CurrentState Stater
 	States []Stater
 }
 
-func New() *Game {
+func New(root string) *Game {
 	start := time.Now()
 
 	runtime.LockOSThread()
 	renderWindow := sf.NewRenderWindow(sf.VideoMode{960, 544, 32}, "Nonograms", sf.StyleClose, sf.DefaultContextSettings())
 
+	tm := NewTextureManger(root)
+
 	s := make([]Stater, 1)
-	s[0] = NewFirst()
+	s[0] = NewFirst(tm)
 
 	game := &Game{
 		Window: renderWindow,
+		TextureManager: tm,
+
 		States: s,
 		CurrentState: s[0],
 	}

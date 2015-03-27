@@ -2,29 +2,37 @@ package nonograms
 
 import (
 	"log"
+	"math"
 	sf "bitbucket.org/krepa098/gosfml2"
 )
 
 const (
+	TrayTypePlay = iota
+	TrayTypeHint
+
 	GridSize = 15
 	// TextureSize = 15.0
 )
 
 type Tray struct {
+	TrayType byte
+	TextureManager *TextureManager
+
 	Background *sf.RectangleShape
 	FacingSide *sf.RectangleShape
 	Shadow *sf.RectangleShape
 
 	Highlight *sf.VertexArray
 	Grid *sf.VertexArray
-	Texture *sf.Texture
 
 	Origin sf.Vector2f
 	Rows int
 	Columns int
 }
 
-func NewTray (origin sf.Vector2f, color sf.Color) *Tray {
+func NewTray (tm *TextureManager, origin sf.Vector2f, color sf.Color, trayType byte) *Tray {
+	log.Printf("TYPE: %d", trayType)
+
 	background, _ := sf.NewRectangleShape()
 	background.SetFillColor(color)
 	background.SetPosition(origin)
@@ -44,15 +52,15 @@ func NewTray (origin sf.Vector2f, color sf.Color) *Tray {
 	grid, _ := sf.NewVertexArray()
 	grid.PrimitiveType = sf.PrimitiveQuads
 
-	texture, _ := sf.NewTextureFromFile("../assets/tile.png", nil)
-
 	return &Tray{
+		TrayType: trayType,
+		TextureManager: tm,
+
 		Background: background,
 		FacingSide: facingSide,
 		Shadow: shadow,
 		Highlight: highlight,
 		Grid: grid,
-		Texture: texture,
 		Origin: origin,
 	}
 }
@@ -89,14 +97,41 @@ func (t *Tray) SetSize (rows, columns int) {
 }
 
 func (t *Tray) SetState(quad []sf.Vertex, state byte) {
-	base := float32(state)
+	x := float32(state)
+	y := float32(t.TrayType)
 
-	quad[0].TexCoords = sf.Vector2f{ base * TextureSize, 0 }
-	quad[1].TexCoords = sf.Vector2f{ (base + 1) * TextureSize, 0 }
-	quad[2].TexCoords = sf.Vector2f{ (base + 1) * TextureSize, TextureSize }
-	quad[3].TexCoords = sf.Vector2f{ base * TextureSize, TextureSize }
+	log.Printf("x %d y %d", x, y)
+
+	quad[0].TexCoords = sf.Vector2f{ x * TextureSize, y * TextureSize }
+	quad[1].TexCoords = sf.Vector2f{ (x + 1) * TextureSize, y * TextureSize }
+	quad[2].TexCoords = sf.Vector2f{ (x + 1) * TextureSize, (y + 1) * TextureSize }
+	quad[3].TexCoords = sf.Vector2f{ x * TextureSize, (y + 1) * TextureSize }
 }
 
+func (t *Tray) QuadFromCoords(coord_xi, coord_yi int) ([]sf.Vertex, bool) {
+	if coord_xi > t.Columns -1 || coord_xi < 0 || coord_yi > t.Rows -1 || coord_yi < 0 {
+		return nil, false
+	}
+
+	index := (coord_yi * t.Columns * 4) + (coord_xi * 4)
+	return t.Grid.Vertices[index:index+4], true
+}
+
+func (t *Tray) CoordsFromPosition(x, y int) (int, int) {
+	base_x := float32(x) - t.Origin.X
+	base_y := float32(y) - t.Origin.Y
+	portions_x := base_x / ((5 * GridSize) + 3 + 4)
+	portions_y := base_y / ((5 * GridSize) + 3 + 4)
+
+	log.Printf("Portions X: %f, Portions Y: %f", portions_x, portions_y)
+
+	coord_xf := (base_x - (3 * portions_x) - (4 * portions_x)) / 15
+	coord_yf := (base_y - (3 * portions_y) - (4 * portions_y)) / 15
+
+	log.Printf("Coord X: %f, Coord Y: %f", coord_xf, coord_yf)
+
+	return int(math.Floor(float64(coord_xf))), int(math.Floor(float64(coord_yf)))
+}
 
 func (t *Tray) Populate () {
 	log.Printf("Vertex Count: %d", t.Grid.GetVertexCount())
@@ -127,9 +162,9 @@ func (t *Tray) Populate () {
 			}
 
 			q[0].Color = sf.ColorWhite()
-			q[1].Color = sf.ColorRed()
-			q[2].Color = sf.ColorBlue()
-			q[3].Color = sf.ColorYellow()
+			q[1].Color = sf.ColorWhite()
+			q[2].Color = sf.ColorWhite()
+			q[3].Color = sf.ColorWhite()
 
 			q[0].Position = sf.Vector2f{
 				t.Origin.X + float32((x * GridSize) + padding_x + cellpadding_x),
@@ -164,7 +199,7 @@ func (t *Tray) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 		Shader: nil,
 		BlendMode: sf.BlendAlpha,
 		Transform: sf.TransformIdentity(),
-		Texture: t.Texture,
+		Texture: t.TextureManager.Get("tile"),
 	}
 
 	h := sf.RenderStates{

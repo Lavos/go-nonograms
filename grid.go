@@ -25,9 +25,9 @@ func GridToPixelsi (grid_index int) int {
 }
 
 type Grid struct {
-	TileMap *TileMap
-
-	Trays []*Tray
+	PlayTray *Tray
+	HintTrayTop *Tray
+	HintTrayLeft *Tray
 
 	Solved bool
 
@@ -37,40 +37,18 @@ type Grid struct {
 	Drawers []sf.Drawer
 	Eventers []Eventer
 
-	SuccessMessage *sf.Text
-	HintTexture *sf.Texture
-
 	Mode byte
 }
 
-func NewGrid () *Grid {
-	tm := NewTileMap()
-
-	tray2 := NewTray(sf.Vector2f{ 700, 300 }, sf.ColorRed())
-	tray2.SetSize(5, 5)
-
-	tray3 := NewTray(sf.Vector2f{ 0, 0 }, sf.Color{251, 233, 194, 255})
-	tray3.SetSize(20, 45)
-
-	trays := []*Tray{
-		tray2,
-		tray3,
-	}
-
-	font, _ := sf.NewFontFromFile("TerminalVector.ttf")
-	success_message, _ := sf.NewText(font)
-	success_message.SetCharacterSize(12)
-	success_message.SetString("Completed!")
-	success_message.SetPosition(sf.Vector2f{10, 120})
-
-	hint_texture, _ := sf.NewTextureFromFile("../assets/hints.png", nil)
+func NewGrid (tm *TextureManager) *Grid {
+	playTray := NewTray(tm, sf.Vector2f{ 100, 100 }, sf.ColorRed(), TrayTypePlay)
+	hintTrayTop := NewTray(tm, sf.Vector2f{ 100, 0 }, sf.ColorBlue(), TrayTypeHint)
+	hintTrayLeft := NewTray(tm, sf.Vector2f{ 0, 100 }, sf.ColorBlue(), TrayTypeHint)
 
 	return &Grid{
-		TileMap: tm,
-		Trays: trays,
-
-		SuccessMessage: success_message,
-		HintTexture: hint_texture,
+		PlayTray: playTray,
+		HintTrayTop: hintTrayTop,
+		HintTrayLeft: hintTrayLeft,
 	}
 }
 
@@ -84,9 +62,16 @@ func (g *Grid) Render(matrix Matrix) {
 	g.WorkingMatrix = NewMatrix(rows, columns)
 	g.GoalMatrix = matrix
 
-	g.TileMap.SetSize(rows, columns)
+	g.PlayTray.SetSize(rows, columns)
+	g.HintTrayTop.SetSize(5, 5)
+	g.HintTrayLeft.SetSize(5, 5)
 
-	g.Drawers = make([]sf.Drawer, 0)
+	g.Drawers = []sf.Drawer{
+		g.HintTrayTop,
+		g.HintTrayLeft,
+		g.PlayTray,
+	}
+
 	g.Eventers = make([]Eventer, 0)
 	row_hints := make([][]int, rows)
 	column_hints := make([][]int, columns)
@@ -129,24 +114,6 @@ func (g *Grid) Render(matrix Matrix) {
 			row_hints[y] = append(row_hints[y], row_consecutive)
 		}
 	}
-
-	for y, row := range row_hints {
-		for x, n := range row {
-			h := NewHint(g.HintTexture, n)
-			h.Sprite.SetPosition(sf.Vector2f{ GridToPixelsf(11 + x - len(row)), GridToPixelsf(y + 11) })
-			g.Drawers = append(g.Drawers, h)
-			g.Eventers = append(g.Eventers, h)
-		}
-	}
-
-	for x, column := range column_hints {
-		for y, n := range column {
-			h := NewHint(g.HintTexture, n)
-			h.Sprite.SetPosition(sf.Vector2f{ GridToPixelsf(x + 11), GridToPixelsf(11 + y - len(column)) })
-			g.Drawers = append(g.Drawers, h)
-			g.Eventers = append(g.Eventers, h)
-		}
-	}
 }
 
 func (g *Grid) Logic() {
@@ -170,18 +137,8 @@ func (g *Grid) CheckIfSolved() bool {
 }
 
 func (g *Grid) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
-	if g.Solved {
-		g.SuccessMessage.Draw(target, renderStates)
-	}
-
 	for _, h := range g.Drawers {
 		h.Draw(target, renderStates)
-	}
-
-	g.TileMap.Draw(target, renderStates)
-
-	for _, t := range g.Trays {
-		t.Draw(target, renderStates)
 	}
 }
 
@@ -199,8 +156,8 @@ func (g *Grid) HandleEvent(event sf.Event) {
 		}
 
 	case sf.EventTypeMouseButtonReleased:
-		x, y := g.TileMap.CoordsFromPosition(CurrentMousePosition.X, CurrentMousePosition.Y)
-		quad, ok := g.TileMap.QuadFromCoords(x, y)
+		x, y := g.PlayTray.CoordsFromPosition(CurrentMousePosition.X, CurrentMousePosition.Y)
+		quad, ok := g.PlayTray.QuadFromCoords(x, y)
 
 		if !ok {
 			break
@@ -217,7 +174,7 @@ func (g *Grid) HandleEvent(event sf.Event) {
 			g.WorkingMatrix[y][x] = ByteEmpty
 		}
 
-		g.TileMap.SetState(quad, g.WorkingMatrix[y][x])
+		g.PlayTray.SetState(quad, g.WorkingMatrix[y][x])
 	}
 
 	for _, e := range g.Eventers {

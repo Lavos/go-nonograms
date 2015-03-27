@@ -14,23 +14,13 @@ type First struct {
 	Logicers []Logicer
 }
 
-func NewFirst () *First {
-	background_texture, _ := sf.NewTextureFromFile("../assets/grid.png", nil)
-	background_texture.SetRepeated(true)
-	background, _ := sf.NewSprite(background_texture)
-	background.SetTextureRect(sf.IntRect{
-		Top: 0,
-		Left: 0,
-		Width: 960,
-		Height: 544,
-	})
-
+func NewFirst (tm *TextureManager) *First {
 	m := NewMatrix(5, 5)
 	m.Randomize()
 
 	log.Printf("Matrix: %#v", m)
 
-	g := NewGrid()
+	g := NewGrid(tm)
 	g.Render(m)
 
 	timer := NewTimer()

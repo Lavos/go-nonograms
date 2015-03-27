@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	g := nonograms.New()
+	g := nonograms.New("..")
 	g.Run()
 }
