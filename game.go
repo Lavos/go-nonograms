@@ -56,8 +56,8 @@ func (g *Game) Run () {
 	for g.Window.IsOpen(){
 		select {
 		case <-t.C:
-			// log.Printf("FPS: %d", fps)
-			// log.Printf("Frames: %d", frames)
+			log.Printf("FPS: %d", fps)
+			log.Printf("Frames: %d", frames)
 			fps = 0
 
 		case <-limit.C:

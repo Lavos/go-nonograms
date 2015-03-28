@@ -15,7 +15,7 @@ type First struct {
 }
 
 func NewFirst (tm *TextureManager) *First {
-	m := NewMatrix(5, 5)
+	m := NewMatrix(20, 30)
 	m.Randomize()
 
 	log.Printf("Matrix: %#v", m)
@@ -26,7 +26,7 @@ func NewFirst (tm *TextureManager) *First {
 	timer := NewTimer()
 	timer.Start()
 
-	drawers := []sf.Drawer{ g, timer }
+	drawers := []sf.Drawer{ g }
 	eventers := []Eventer{ g }
 	logicers := []Logicer { g }
 

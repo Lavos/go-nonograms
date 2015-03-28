@@ -30,12 +30,11 @@ type Tray struct {
 	Columns int
 }
 
-func NewTray (tm *TextureManager, origin sf.Vector2f, color sf.Color, trayType byte) *Tray {
+func NewTray (tm *TextureManager, color sf.Color, trayType byte) *Tray {
 	log.Printf("TYPE: %d", trayType)
 
 	background, _ := sf.NewRectangleShape()
 	background.SetFillColor(color)
-	background.SetPosition(origin)
 
 	facingSide, _ := sf.NewRectangleShape()
 	facingSide.SetFillColor(sf.Color{0, 0, 0, 38})
@@ -46,8 +45,8 @@ func NewTray (tm *TextureManager, origin sf.Vector2f, color sf.Color, trayType b
 	highlight, _ := sf.NewVertexArray()
 	highlight.PrimitiveType = sf.PrimitiveLines
 	highlight.Resize(2)
-	highlight.Vertices[0].Color = sf.Color{255, 255, 255, 255}
-	highlight.Vertices[1].Color = sf.Color{255, 255, 255, 255}
+	highlight.Vertices[0].Color = sf.Color{255, 255, 255, 115}
+	highlight.Vertices[1].Color = sf.Color{255, 255, 255, 115}
 
 	grid, _ := sf.NewVertexArray()
 	grid.PrimitiveType = sf.PrimitiveQuads
@@ -61,8 +60,13 @@ func NewTray (tm *TextureManager, origin sf.Vector2f, color sf.Color, trayType b
 		Shadow: shadow,
 		Highlight: highlight,
 		Grid: grid,
-		Origin: origin,
 	}
+}
+
+func (t *Tray) SetPosition (origin sf.Vector2f) {
+	t.Origin = origin
+	t.Background.SetPosition(origin)
+	t.SetSize(t.Rows, t.Columns)
 }
 
 func (t *Tray) SetSize (rows, columns int) {
@@ -100,12 +104,24 @@ func (t *Tray) SetState(quad []sf.Vertex, state byte) {
 	x := float32(state)
 	y := float32(t.TrayType)
 
-	log.Printf("x %d y %d", x, y)
-
 	quad[0].TexCoords = sf.Vector2f{ x * TextureSize, y * TextureSize }
 	quad[1].TexCoords = sf.Vector2f{ (x + 1) * TextureSize, y * TextureSize }
 	quad[2].TexCoords = sf.Vector2f{ (x + 1) * TextureSize, (y + 1) * TextureSize }
 	quad[3].TexCoords = sf.Vector2f{ x * TextureSize, (y + 1) * TextureSize }
+}
+
+func (t *Tray) ToggleHighlight(quad []sf.Vertex) {
+	if quad[0].Color == sf.ColorWhite() {
+		quad[0].Color = sf.ColorGreen()
+		quad[1].Color = sf.ColorGreen()
+		quad[2].Color = sf.ColorGreen()
+		quad[3].Color = sf.ColorGreen()
+	} else {
+		quad[0].Color = sf.ColorWhite()
+		quad[1].Color = sf.ColorWhite()
+		quad[2].Color = sf.ColorWhite()
+		quad[3].Color = sf.ColorWhite()
+	}
 }
 
 func (t *Tray) QuadFromCoords(coord_xi, coord_yi int) ([]sf.Vertex, bool) {
@@ -204,7 +220,7 @@ func (t *Tray) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 
 	h := sf.RenderStates{
 		Shader: nil,
-		BlendMode: sf.BlendMultiply,
+		BlendMode: sf.BlendAlpha,
 		Transform: sf.TransformIdentity(),
 		Texture: nil,
 	}
