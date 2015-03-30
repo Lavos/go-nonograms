@@ -1,7 +1,6 @@
 package nonograms
 
 import (
-	"log"
 	"math"
 	sf "bitbucket.org/krepa098/gosfml2"
 )
@@ -11,7 +10,7 @@ const (
 	TrayTypeHint
 
 	GridSize = 15
-	// TextureSize = 15.0
+	TextureSize = 15
 )
 
 type Tray struct {
@@ -31,8 +30,6 @@ type Tray struct {
 }
 
 func NewTray (tm *TextureManager, color sf.Color, trayType byte) *Tray {
-	log.Printf("TYPE: %d", trayType)
-
 	background, _ := sf.NewRectangleShape()
 	background.SetFillColor(color)
 
@@ -83,12 +80,9 @@ func (t *Tray) SetSize (rows, columns int) {
 	var width float32 = 3 * (cf / 5) + (cf - (cf/5)) + (cf * GridSize) + 3
 	var height float32 = 3 * (rf / 5) + (rf - (rf/5)) + (rf * GridSize) + 8
 
-	log.Printf("width: %f, height: %f", width, height)
-
 	size_vector := sf.Vector2f{ width, height }
 
 	t.Background.SetSize(size_vector)
-	log.Printf("%#v", t.Background.GetSize())
 
 	t.FacingSide.SetSize(sf.Vector2f{ float32(width), 5 })
 	t.FacingSide.SetPosition(sf.Vector2f{ t.Origin.X, t.Origin.Y + float32(height - 5) })
@@ -139,19 +133,13 @@ func (t *Tray) CoordsFromPosition(x, y int) (int, int) {
 	portions_x := base_x / ((5 * GridSize) + 3 + 4)
 	portions_y := base_y / ((5 * GridSize) + 3 + 4)
 
-	log.Printf("Portions X: %f, Portions Y: %f", portions_x, portions_y)
-
 	coord_xf := (base_x - (3 * portions_x) - (4 * portions_x)) / 15
 	coord_yf := (base_y - (3 * portions_y) - (4 * portions_y)) / 15
-
-	log.Printf("Coord X: %f, Coord Y: %f", coord_xf, coord_yf)
 
 	return int(math.Floor(float64(coord_xf))), int(math.Floor(float64(coord_yf)))
 }
 
 func (t *Tray) Populate () {
-	log.Printf("Vertex Count: %d", t.Grid.GetVertexCount())
-
 	var q []sf.Vertex
 	var index int
 	var padding_x int

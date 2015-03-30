@@ -7,8 +7,22 @@ import (
 	sf "bitbucket.org/krepa098/gosfml2"
 )
 
+const (
+	ViewWidth = 960
+	ViewHeight = 544
+)
+
+
 var (
 	CurrentMousePosition sf.EventMouseMoved
+	Modes = []string{ "Random" }
+	Sizes = [][]int{
+		{  5,  5 },
+		{ 10, 10 },
+		{ 15, 15 },
+		{ 20, 20 },
+		{ 20, 30 },
+	}
 )
 
 type Game struct {
@@ -23,12 +37,29 @@ func New(root string) *Game {
 	start := time.Now()
 
 	runtime.LockOSThread()
-	renderWindow := sf.NewRenderWindow(sf.VideoMode{960, 544, 32}, "Nonograms", sf.StyleClose, sf.DefaultContextSettings())
+	renderWindow := sf.NewRenderWindow(sf.VideoMode{ViewWidth, ViewHeight, 32}, "Nonograms", sf.StyleClose, sf.DefaultContextSettings())
 
 	tm := NewTextureManger(root)
 
-	s := make([]Stater, 1)
-	s[0] = NewFirst(tm)
+	f := NewFirst(tm)
+
+	a := time.NewTicker(time.Second * 5)
+	toggle := false
+
+	go func(){
+		for {
+			<-a.C
+			toggle = !toggle
+
+			if toggle {
+				f.MoveView(sf.Vector2f{ 1440, 272 })
+			} else {
+				f.MoveView(sf.Vector2f{ 480, 272 })
+			}
+		}
+	}()
+
+	s := []Stater{ f }
 
 	game := &Game{
 		Window: renderWindow,
@@ -46,12 +77,12 @@ func (g *Game) Run () {
 	log.Print("Running...")
 	// g.Window.SetFramerateLimit(60)
 
-
 	t := time.NewTicker(time.Second)
 	limit := time.NewTicker(time.Second / 60)
 
 	var frames uint64
 	var fps int
+
 
 	for g.Window.IsOpen(){
 		select {
@@ -81,6 +112,7 @@ func (g *Game) Run () {
 
 			g.Window.Clear(sf.Color{50, 200, 50, 0})
 			g.Window.Draw(g.CurrentState, sf.DefaultRenderStates())
+
 			g.Window.Display()
 		}
 	}
