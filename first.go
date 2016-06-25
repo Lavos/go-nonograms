@@ -12,13 +12,15 @@ type First struct {
 	// Timer *Timer
 
 	PlayAreaView *sf.View
+	RenderTarget sf.RenderTarget
 
 	Drawers []sf.Drawer
 	Eventers []Eventer
+	ViewEventers []ViewEventer
 	Logicers []Logicer
 }
 
-func NewFirst (tm *TextureManager) *First {
+func NewFirst (tm *TextureManager, rt sf.RenderTarget) *First {
 	m := NewMatrix(5, 5)
 	m.Randomize()
 
@@ -26,6 +28,7 @@ func NewFirst (tm *TextureManager) *First {
 
 	drawers := make([]sf.Drawer, 0)
 	eventers := make([]Eventer, 0)
+	view_eventers := make([]ViewEventer, 0)
 	logicers := make([]Logicer, 0)
 
 	log.Printf("Matrix: %#v", m)
@@ -33,8 +36,10 @@ func NewFirst (tm *TextureManager) *First {
 	for y, _ := range Modes {
 		for x, size := range Sizes {
 			s := NewScene(tm, sf.Vector2f{ float32(x * ViewWidth), float32(y * ViewHeight) }, size[0], size[1])
+			s.SetGoalMatrix(m)
 			drawers = append(drawers, s)
 			eventers = append(eventers, s)
+			view_eventers = append(view_eventers, s)
 			logicers = append(logicers, s)
 		}
 	}
@@ -45,9 +50,11 @@ func NewFirst (tm *TextureManager) *First {
 	return &First{
 		// Timer: timer,
 		PlayAreaView: view,
+		RenderTarget: rt,
 
 		Drawers: drawers,
 		Eventers: eventers,
+		ViewEventers: view_eventers,
 		Logicers: logicers,
 	}
 }
@@ -103,7 +110,7 @@ loop:
 					y = baseOrigin.Y - (clock.EaseInOut(clock.Time(targetOrigin.Y), clock.Time(baseOrigin.Y), counter_y) * delta_y)
 				}
 
-				log.Printf("x %f y %f", x, y)
+				// log.Printf("x %f y %f", x, y)
 
 				f.PlayAreaView.SetCenter(sf.Vector2f{x, y})
 
@@ -130,6 +137,12 @@ func (f *First) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 func (f *First) HandleEvent(event sf.Event) {
 	for _, e := range f.Eventers {
 		e.HandleEvent(event)
+	}
+
+	coords := f.RenderTarget.MapPixelToCoords(sf.Vector2i{ CurrentMousePosition.X, CurrentMousePosition.Y }, f.PlayAreaView)
+
+	for _, e := range f.ViewEventers {
+		e.HandleViewEvent(event, coords)
 	}
 }
 

@@ -169,7 +169,7 @@ func (s *Scene) SetGoalMatrix(matrix Matrix) {
 	// set hints into trays
 	for x, column := range column_hints {
 		for i, h := range column {
-			quad, ok := s.HintTrayTop.QuadFromCoords(x, (s.HintTopRows) - len(column) + i)
+			quad, ok := s.HintTrayTop.QuadFromIndexes(x, (s.HintTopRows) - len(column) + i)
 
 			if !ok {
 				continue
@@ -181,7 +181,7 @@ func (s *Scene) SetGoalMatrix(matrix Matrix) {
 
 	for y, row := range row_hints {
 		for i, h := range row {
-			quad, ok := s.HintTrayLeft.QuadFromCoords((s.HintLeftColumns) - len(row) + i, y)
+			quad, ok := s.HintTrayLeft.QuadFromIndexes((s.HintLeftColumns) - len(row) + i, y)
 
 			if !ok {
 				continue
@@ -221,6 +221,10 @@ func (s *Scene) Draw(target sf.RenderTarget, renderStates sf.RenderStates) {
 func (s *Scene) HandleEvent(event sf.Event) {
 	// defer TrackTime(time.Now(), "HandleEvent")
 
+	if s.WorkingMatrix == nil {
+		return
+	}
+
 	switch event.Type() {
 	case sf.EventTypeMouseButtonPressed:
 		if sf.IsMouseButtonPressed(sf.MouseLeft) {
@@ -230,14 +234,22 @@ func (s *Scene) HandleEvent(event sf.Event) {
 		if sf.IsMouseButtonPressed(sf.MouseRight) {
 			s.Mode = ModeCrossOut
 		}
+	}
+}
 
+func (s *Scene) HandleViewEvent(event sf.Event, coords sf.Vector2f) {
+	if s.WorkingMatrix == nil {
+		return
+	}
+
+	switch event.Type() {
 	case sf.EventTypeMouseButtonReleased:
 		var quad []sf.Vertex
 		var ok bool
 		var x, y int
 
-		x, y = s.PlayTray.CoordsFromPosition(CurrentMousePosition.X, CurrentMousePosition.Y)
-		quad, ok = s.PlayTray.QuadFromCoords(x, y)
+		x, y = s.PlayTray.IndexesFromCoords(coords)
+		quad, ok = s.PlayTray.QuadFromIndexes(x, y)
 
 		if ok {
 			switch s.WorkingMatrix[y][x] {
@@ -255,16 +267,16 @@ func (s *Scene) HandleEvent(event sf.Event) {
 			break
 		}
 
-		x, y = s.HintTrayTop.CoordsFromPosition(CurrentMousePosition.X, CurrentMousePosition.Y)
-		quad, ok = s.HintTrayTop.QuadFromCoords(x, y)
+		x, y = s.HintTrayTop.IndexesFromCoords(coords)
+		quad, ok = s.HintTrayTop.QuadFromIndexes(x, y)
 
 		if ok {
 			s.HintTrayTop.ToggleHighlight(quad)
 			break
 		}
 
-		x, y = s.HintTrayLeft.CoordsFromPosition(CurrentMousePosition.X, CurrentMousePosition.Y)
-		quad, ok = s.HintTrayLeft.QuadFromCoords(x, y)
+		x, y = s.HintTrayLeft.IndexesFromCoords(coords)
+		quad, ok = s.HintTrayLeft.QuadFromIndexes(x, y)
 
 		if ok {
 			s.HintTrayLeft.ToggleHighlight(quad)

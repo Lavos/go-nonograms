@@ -8,6 +8,12 @@ type Eventer interface {
 	HandleEvent(sf.Event)
 }
 
+type ViewEventer interface {
+	Eventer
+
+	HandleViewEvent(sf.Event, sf.Vector2f)
+}
+
 type Logicer interface {
 	Logic()
 }

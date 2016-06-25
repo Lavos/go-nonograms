@@ -41,9 +41,9 @@ func New(root string) *Game {
 
 	tm := NewTextureManger(root)
 
-	f := NewFirst(tm)
+	f := NewFirst(tm, renderWindow)
 
-	a := time.NewTicker(time.Second * 5)
+	/* a := time.NewTicker(time.Second * 5)
 	toggle := false
 
 	go func(){
@@ -57,7 +57,7 @@ func New(root string) *Game {
 				f.MoveView(sf.Vector2f{ 480, 272 })
 			}
 		}
-	}()
+	}() */
 
 	s := []Stater{ f }
 

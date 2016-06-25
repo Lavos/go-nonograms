@@ -118,23 +118,23 @@ func (t *Tray) ToggleHighlight(quad []sf.Vertex) {
 	}
 }
 
-func (t *Tray) QuadFromCoords(coord_xi, coord_yi int) ([]sf.Vertex, bool) {
-	if coord_xi > t.Columns -1 || coord_xi < 0 || coord_yi > t.Rows -1 || coord_yi < 0 {
+func (t *Tray) QuadFromIndexes(index_x, index_y int) ([]sf.Vertex, bool) {
+	if index_x > t.Columns -1 || index_x < 0 || index_y > t.Rows -1 || index_y < 0 {
 		return nil, false
 	}
 
-	index := (coord_yi * t.Columns * 4) + (coord_xi * 4)
+	index := (index_y * t.Columns * 4) + (index_x * 4)
 	return t.Grid.Vertices[index:index+4], true
 }
 
-func (t *Tray) CoordsFromPosition(x, y int) (int, int) {
-	base_x := float32(x) - t.Origin.X
-	base_y := float32(y) - t.Origin.Y
-	portions_x := base_x / ((5 * GridSize) + 3 + 4)
-	portions_y := base_y / ((5 * GridSize) + 3 + 4)
+func (t *Tray) IndexesFromCoords(pos sf.Vector2f) (int, int) {
+	diff := pos.Minus(t.Origin)
 
-	coord_xf := (base_x - (3 * portions_x) - (4 * portions_x)) / 15
-	coord_yf := (base_y - (3 * portions_y) - (4 * portions_y)) / 15
+	portions_x := diff.X / ((5 * GridSize) + 3 + 4)
+	portions_y := diff.Y / ((5 * GridSize) + 3 + 4)
+
+	coord_xf := (diff.X - (3 * portions_x) - (4 * portions_x)) / 15
+	coord_yf := (diff.Y - (3 * portions_y) - (4 * portions_y)) / 15
 
 	return int(math.Floor(float64(coord_xf))), int(math.Floor(float64(coord_yf)))
 }
